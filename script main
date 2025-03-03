@@ -159,24 +159,20 @@ userInfoFrame.Parent = tabContents["User Info"]
 
 local function UpdateUserInfo()
     local player = game.Players.LocalPlayer
-    local char = player.Character or player.CharacterAdded:Wait()
-    
-    if not userInfoFrame then return end 
-
     userInfoFrame.Text = 
         "━━━━━━━━━━━━━━━━━━━━━\n"..
-        "Tên: "..safeGet(player, "DisplayName", "Không xác định").." (@"..safeGet(player, "Name", "???")..")\n"..
-        "Cấp: "..safeGet(player.Data.Level, "Value", "N/A").."\n"..
-        "Tiền: "..safeGet(player.Data.Beli, "Value", "0").."\n"..
-        "Điểm F: "..safeGet(player.Data.Fragments, "Value", "0").."\n"..
-        "Tiền Truy Nã: "..safeGet(player.leaderstats["Bounty/Honor"], "Value", "0").."\n"..
-        "Máu: "..safeGet(char.Humanoid, "Health", "N/A").."/"..safeGet(char.Humanoid, "MaxHealth", "N/A").."\n"..
-        "Năng Lượng: "..safeGet(char:FindFirstChild("Energy"), "Value", "N/A").."/"..safeGet(char:FindFirstChild("Energy"), "MaxValue", "N/A").."\n"..
-        "Tộc: "..safeGet(player.Data.Race, "Value", "Không rõ").."\n"..
-        "Trái: "..safeGet(player.Data.DevilFruit, "Value", "Không có").."\n"..
+        "Tên: "..player.DisplayName.." (@"..player.Name..")\n"..
+        "Cấp: "..player.Data.Level.Value.."\n"..
+        "Tiền: "..player.Data.Beli.Value.."\n"..
+        "Điểm F: "..player.Data.Fragments.Value.."\n"..
+        "Tiền Truy Nã: "..player.leaderstats["Bounty/Honor"].Value.."\n"..
+        "Máu: "..player.Character.Humanoid.Health.."/"..player.Character.Humanoid.MaxHealth.."\n"..
+        "Năng Lượng: "..player.Character.Energy.Value.."/"..player.Character.Energy.MaxValue.."\n"..
+        "Tộc: "..player.Data.Race.Value.."\n"..
+        "Trái: "..player.Data.DevilFruit.Value.."\n"..
         "━━━━━━━━━━━━━━━━━━━━━"
 end
-
+UpdateUserInfo()
 
 -- 🟢 Thêm phần hiển thị Thời Gian
 local timeLabel = Instance.new("TextLabel")
@@ -244,6 +240,7 @@ spawn(function()
         task.wait(1)
     end
 end)
+
 
 -- Tạo khung chứa Avatar + Tên người chơi
 local playerInfoFrame = Instance.new("Frame")
