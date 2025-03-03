@@ -1,106 +1,193 @@
-local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
-local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
-local LocalPlayer = Players.LocalPlayer
-local TeleportService = game:GetService("TeleportService")
+local player = game.Players.LocalPlayer
+local playerName = player.Name
+local userId = player.UserId
+local avatarUrl = "https://www.roblox.com/headshot-thumbnail/image?userId="..userId.."&width=100&height=100&format=png"
 
--- Lấy avatar của người chơi từ Roblox API
-local AvatarURL = "https://media.discordapp.net/attachments/1218215410709696546/1236542261446185070/Me_Noob_6.png?format=webp&quality=lossless&width=100&height=100"
+-- Tạo GUI chính
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "MenoobHub"
+screenGui.Parent = game.CoreGui
 
--- Biến lưu trạng thái mở/tắt UI
-local isUIOpen = false
-local isDragging = false
-local isDraggingWindow = false
-local dragStart, startPos
-local dragOffset = Vector2.new(0, 0)
+-- Tạo Icon Avatar (Di chuyển được)
+local toggleButton = Instance.new("ImageButton")
+toggleButton.Size = UDim2.new(0, 50, 0, 50)
+toggleButton.Position = UDim2.new(0, 10, 0.5, -25)
+toggleButton.Image = avatarUrl
+toggleButton.BackgroundTransparency = 1
+toggleButton.Parent = screenGui
 
--- Load vị trí cũ của icon (nếu có)
-local iconPosition = UDim2.fromOffset(50, 50)
+-- Tạo Frame chính (Di chuyển được)
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 500, 0, 320)
+mainFrame.Position = UDim2.new(0, 50, 0.2, 0)
+mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+mainFrame.BorderSizePixel = 2
+mainFrame.Visible = false -- Ẩn ban đầu
+mainFrame.Active = true
+mainFrame.Draggable = true
+mainFrame.Parent = screenGui
 
--- Tạo bảng UI chính
-local Window = Fluent:CreateWindow({
-    Title = "MeNoob Hub",
-    SubTitle = "By Vacation",
-    TabWidth = 160,
-    Theme = "Darker",
-    Acrylic = false,
-    Size = UDim2.fromOffset(500, 320),
-    MinimizeKey = Enum.KeyCode.End
-})
+-- Tiêu đề chính
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, 0, 0, 40)
+titleLabel.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+titleLabel.Text = "MeNoob Hub - By Vacation"
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.Font = Enum.Font.SourceSansBold
+titleLabel.TextSize = 18
+titleLabel.Parent = mainFrame
 
-local Tabs = {
-    Status = Window:AddTab({ Title = "Use Info" }),
-    AutoFarm = Window:AddTab({ Title = "Auto Hop" }),
-    Sp = Window:AddTab({ Title = "Hỗ Trợ" }),
-    KillBot = Window:AddTab({ Title = "Kill Bot" }),
-    Misc = Window:AddTab({ Title = "Misc" })
-}
+-- Nút Đóng [❌]
+local closeButton = Instance.new("TextButton")
+closeButton.Size = UDim2.new(0, 30, 0, 30)
+closeButton.Position = UDim2.new(1, -35, 0, 5)
+closeButton.BackgroundTransparency = 1
+closeButton.Text = "❌"
+closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeButton.Font = Enum.Font.SourceSansBold
+closeButton.TextSize = 18
+closeButton.Parent = mainFrame
 
--- 🏴‍☠️ Kill Bot Tab (Hack tiêu diệt Bot)
-Tabs.KillBot:AddButton({
-    Title = "🔥 Kích Hoạt Kill Bot",
-    Description = "Nhấn để bật hack Kill Bot",
-    Callback = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/REDzHUB/BloxFruits/main/redz9999"))()
+-- Nút Phóng To [🔲]
+local maximizeButton = Instance.new("TextButton")
+maximizeButton.Size = UDim2.new(0, 30, 0, 30)
+maximizeButton.Position = UDim2.new(1, -70, 0, 5) -- Đặt bên trái nút đóng
+maximizeButton.BackgroundTransparency = 1
+maximizeButton.Text = "🔲"
+maximizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+maximizeButton.Font = Enum.Font.SourceSansBold
+maximizeButton.TextSize = 18
+maximizeButton.Parent = mainFrame
+
+-- Nút Thu Nhỏ [➖]
+local minimizeButton = Instance.new("TextButton")
+minimizeButton.Size = UDim2.new(0, 30, 0, 30)
+minimizeButton.Position = UDim2.new(1, -105, 0, 5) -- Đặt bên trái nút phóng to
+minimizeButton.BackgroundTransparency = 1
+minimizeButton.Text = "➖"
+minimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+minimizeButton.Font = Enum.Font.SourceSansBold
+minimizeButton.TextSize = 18
+minimizeButton.Parent = mainFrame
+
+-- Biến lưu kích thước ban đầu của mainFrame
+local originalSize = mainFrame.Size
+local originalPosition = mainFrame.Position
+local isMaximized = false
+
+-- Xử lý khi bấm nút Thu Nhỏ
+minimizeButton.MouseButton1Click:Connect(function()
+    mainFrame.Visible = false
+end)
+
+-- Xử lý khi bấm nút Phóng To
+maximizeButton.MouseButton1Click:Connect(function()
+    if isMaximized then
+        -- Quay lại kích thước ban đầu
+        mainFrame.Size = originalSize
+        mainFrame.Position = originalPosition
+        isMaximized = false
+    else
+        -- Phóng to màn hình
+        mainFrame.Size = UDim2.new(1, -100, 1, -100) -- Gần full màn hình
+        mainFrame.Position = UDim2.new(0, 50, 0, 50)
+        isMaximized = true
     end
-})
+end)
 
-Tabs.Sp:AddParagraph({
-    Title = "Chào mừng!",
-    Content = "Nhấn vào icon avatar để bật/tắt bảng script!"
-})
+-- Xử lý khi bấm nút Đóng
+closeButton.MouseButton1Click:Connect(function()
+    screenGui:Destroy() -- Xóa toàn bộ UI
+    print("❌ Menoob Hub đã bị tắt.")
+end)
 
-Tabs.Sp:AddParagraph({
-    Title = "👑 MenoobGaming Hub",
-    Content = "Cảm ơn bạn đã sử dụng script!"
-})
+-- Tạo Tabs
+local tabFrame = Instance.new("Frame")
+tabFrame.Size = UDim2.new(0, 160, 1, -40)
+tabFrame.Position = UDim2.new(0, 0, 0, 40)
+tabFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+tabFrame.Parent = mainFrame
 
-Tabs.Sp:AddButton({
-    Title = "🌍 Tham gia Discord",
-    Description = "Kết nối với cộng đồng MenoobGaming",
-    Callback = function()
-        local discordLink = "https://discord.gg/t4pjwuweUR"
-        setclipboard(discordLink)
-        game:LaunchURL(discordLink) 
-    end
-})
+local contentFrame = Instance.new("Frame")
+contentFrame.Size = UDim2.new(1, -160, 1, -40)
+contentFrame.Position = UDim2.new(0, 160, 0, 40)
+contentFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+contentFrame.Parent = mainFrame
 
-Tabs.Sp:AddButton({
-    Title = "🎥 Kênh YouTube",
-    Description = "Theo dõi để cập nhật video mới",
-    Callback = function()
-        local youtubeLink = "https://www.youtube.com/@VacationDev"
-        setclipboard(youtubeLink)
-        game:LaunchURL(youtubeLink) 
-    end
-})
+local tabNames = {"User Info", "Auto Hop", "Hỗ Trợ", "Kill Bot", "Misc"}
+local tabContents = {}
+local Tabs = {}
 
-Tabs.Sp:AddParagraph({
-    Title = "💻 Dev By Vacation",
-    Content = "Mọi vấn đề liên hệ Discord hoặc YouTube!"
-})
+for i, name in ipairs(tabNames) do
+    local tab = Instance.new("TextButton")
+    tab.Size = UDim2.new(1, -4, 0, 30)
+    tab.Position = UDim2.new(0, 2, 0, (i - 1) * 35 + 5)
+    tab.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    tab.Text = name
+    tab.TextColor3 = Color3.fromRGB(255, 255, 255)
+    tab.Font = Enum.Font.SourceSansBold
+    tab.TextSize = 16
+    tab.Parent = tabFrame
+    Tabs[name] = tab
 
--- 📌 Hiển thị thông tin người chơi
-local UserInfo = Tabs.Status:AddParagraph({
-    Title = "👤 Thông Tin Nhân Vật",
-    Content = "━━━━━━━━━━━━━━━━━━━━━\n" ..
-        "🔹 **Tên**: " .. game.Players.LocalPlayer.DisplayName .. " (@" .. game.Players.LocalPlayer.Name .. ")\n" ..
-        "⭐ **Cấp**: " .. game:GetService("Players").LocalPlayer.Data.Level.Value .. "\n" ..
-        "💰 **Tiền**: " .. game:GetService("Players").LocalPlayer.Data.Beli.Value .. "\n" ..
-        "💎 **Điểm F**: " .. game:GetService("Players").LocalPlayer.Data.Fragments.Value .. "\n" ..
-        "🏴‍☠ **Tiền Truy Nã**: " .. game:GetService("Players").LocalPlayer.leaderstats["Bounty/Honor"].Value .. "\n" ..
-        "❤️ **Máu**: " .. game.Players.LocalPlayer.Character.Humanoid.Health .. "/" .. game.Players.LocalPlayer.Character.Humanoid.MaxHealth .. "\n" ..
-        "⚡ **Năng Lượng**: " .. game.Players.LocalPlayer.Character.Energy.Value .. "/" .. game.Players.LocalPlayer.Character.Energy.MaxValue .. "\n" ..
-        "🧬 **Tộc**: " .. game:GetService("Players").LocalPlayer.Data.Race.Value .. "\n" ..
-        "🍎 **Trái**: " .. game:GetService("Players").LocalPlayer.Data.DevilFruit.Value .. "\n" ..
+    local content = Instance.new("Frame")
+    content.Size = UDim2.new(1, 0, 1, 0)
+    content.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+    content.Visible = i == 1 -- Chỉ hiển thị tab đầu tiên
+    content.Parent = contentFrame
+    tabContents[name] = content
+
+    tab.MouseButton1Click:Connect(function()
+        for _, v in pairs(tabContents) do
+            v.Visible = false
+        end
+        content.Visible = true
+    end)
+end
+
+-- 🟢 Thêm phần hiển thị thông tin người chơi vào "User Info"
+local userInfoFrame = Instance.new("TextLabel")
+userInfoFrame.Size = UDim2.new(1, -10, 0, 150)
+userInfoFrame.Position = UDim2.new(0, 5, 0, 5)
+userInfoFrame.TextColor3 = Color3.fromRGB(255, 255, 255)
+userInfoFrame.Font = Enum.Font.SourceSansBold
+userInfoFrame.TextSize = 16
+userInfoFrame.TextXAlignment = Enum.TextXAlignment.Left
+userInfoFrame.TextYAlignment = Enum.TextYAlignment.Top
+userInfoFrame.BackgroundTransparency = 1
+userInfoFrame.Parent = tabContents["User Info"]
+
+local function UpdateUserInfo()
+    local player = game.Players.LocalPlayer
+    local char = player.Character or player.CharacterAdded:Wait()
+    
+    if not userInfoFrame then return end 
+
+    userInfoFrame.Text = 
+        "━━━━━━━━━━━━━━━━━━━━━\n"..
+        "Tên: "..safeGet(player, "DisplayName", "Không xác định").." (@"..safeGet(player, "Name", "???")..")\n"..
+        "Cấp: "..safeGet(player.Data.Level, "Value", "N/A").."\n"..
+        "Tiền: "..safeGet(player.Data.Beli, "Value", "0").."\n"..
+        "Điểm F: "..safeGet(player.Data.Fragments, "Value", "0").."\n"..
+        "Tiền Truy Nã: "..safeGet(player.leaderstats["Bounty/Honor"], "Value", "0").."\n"..
+        "Máu: "..safeGet(char.Humanoid, "Health", "N/A").."/"..safeGet(char.Humanoid, "MaxHealth", "N/A").."\n"..
+        "Năng Lượng: "..safeGet(char:FindFirstChild("Energy"), "Value", "N/A").."/"..safeGet(char:FindFirstChild("Energy"), "MaxValue", "N/A").."\n"..
+        "Tộc: "..safeGet(player.Data.Race, "Value", "Không rõ").."\n"..
+        "Trái: "..safeGet(player.Data.DevilFruit, "Value", "Không có").."\n"..
         "━━━━━━━━━━━━━━━━━━━━━"
-})
+end
 
--- 🕒 Hiển thị thời gian địa phương
-local Time = Tabs.Status:AddParagraph({
-    Title = "🕒 Thời Gian Hiện Tại",
-    Content = ""
-})
+
+-- 🟢 Thêm phần hiển thị Thời Gian
+local timeLabel = Instance.new("TextLabel")
+timeLabel.Size = UDim2.new(1, -10, 0, 25)
+timeLabel.Position = UDim2.new(0, 5, 0, 160)
+timeLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+timeLabel.Font = Enum.Font.SourceSansBold
+timeLabel.TextSize = 16
+timeLabel.TextXAlignment = Enum.TextXAlignment.Left
+timeLabel.BackgroundTransparency = 1
+timeLabel.Parent = tabContents["User Info"]
 
 local function UpdateLocalTime()
     local date = os.date("*t")
@@ -109,12 +196,11 @@ local function UpdateLocalTime()
     local formattedTime = string.format("%02i:%02i:%02i %s", ((hour - 1) % 12) + 1, date.min, date.sec, ampm)
     local formattedDate = string.format("%02d/%02d/%04d", date.day, date.month, date.year)
     
-    -- 🌍 Xác định khu vực của người chơi
+    -- Lấy khu vực của người chơi
     local LocalizationService = game:GetService("LocalizationService")
     local Players = game:GetService("Players")
     local player = Players.LocalPlayer
     local regionCode = "Unknown"
-    
     local success, code = pcall(function()
         return LocalizationService:GetCountryRegionForPlayerAsync(player)
     end)
@@ -123,10 +209,9 @@ local function UpdateLocalTime()
         regionCode = code
     end
     
-    Time:SetDesc(formattedDate .. " - " .. formattedTime .. " [ " .. regionCode .. " ]")
+    timeLabel.Text = "🕒 "..formattedDate .. " - " .. formattedTime .. " [" .. regionCode .. "]"
 end
 
--- ⏳ Cập nhật thời gian liên tục
 spawn(function()
     while true do
         UpdateLocalTime()
@@ -134,157 +219,118 @@ spawn(function()
     end
 end)
 
--- 🕐 Hiển thị thời gian trong game
-local ServerTime = Tabs.Status:AddParagraph({
-    Title = "⏳ Thời Gian Máy Chủ",
-    Content = ""
-})
+-- 🟢 Thêm phần hiển thị Thời Gian Máy Chủ
+local serverTimeLabel = Instance.new("TextLabel")
+serverTimeLabel.Size = UDim2.new(1, -10, 0, 25)
+serverTimeLabel.Position = UDim2.new(0, 5, 0, 190)
+serverTimeLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+serverTimeLabel.Font = Enum.Font.SourceSansBold
+serverTimeLabel.TextSize = 16
+serverTimeLabel.TextXAlignment = Enum.TextXAlignment.Left
+serverTimeLabel.BackgroundTransparency = 1
+serverTimeLabel.Parent = tabContents["User Info"]
 
 local function UpdateServerTime()
     local GameTime = math.floor(workspace.DistributedGameTime + 0.5)
-    local Hour = math.floor(GameTime / (60 ^ 2)) % 24
+    local Hour = math.floor(GameTime / (60^2)) % 24
     local Minute = math.floor(GameTime / 60) % 60
     local Second = GameTime % 60
-    ServerTime:SetDesc(string.format("🕒 **%02d Giờ - %02d Phút - %02d Giây**", Hour, Minute, Second))
+    serverTimeLabel.Text = "⏳ Máy Chủ: " .. string.format("%02d Giờ - %02d Phút - %02d Giây", Hour, Minute, Second)
 end
 
--- 🔄 Cập nhật thời gian server liên tục
 spawn(function()
-    while task.wait() do
-        pcall(UpdateServerTime)
+    while true do
+        UpdateServerTime()
+        task.wait(1)
     end
 end)
 
--- 🌟 Tab Misc (Tính năng tiện ích)
-Tabs.Misc:AddButton({
-    Title = "🚀 Mở Khóa FPS",
-    Description = "Gỡ bỏ giới hạn FPS để chơi mượt hơn",
-    Callback = function()
-        setfpscap(500) 
-    end
-})
+-- Tạo khung chứa Avatar + Tên người chơi
+local playerInfoFrame = Instance.new("Frame")
+playerInfoFrame.Size = UDim2.new(0, 160, 0, 60) -- Khung có chiều cao 60px, bằng chiều rộng tabFrame
+playerInfoFrame.Position = UDim2.new(0, 0, 1, -60) -- Đặt sát mép dưới mainFrame
+playerInfoFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35) -- Màu nền tối hơn tabFrame để phân biệt
+playerInfoFrame.Parent = mainFrame
 
-Tabs.Misc:AddButton({
-    Title = "🔄 Chuyển Server",
-    Description = "Nhảy sang một server ngẫu nhiên",
-    Callback = function()
-        TeleportService:Teleport(game.PlaceId, LocalPlayer)
-    end
-})
+-- Tạo Avatar Image (sát góc trái bên dưới)
+local avatarImage = Instance.new("ImageLabel")
+avatarImage.Size = UDim2.new(0, 50, 0, 50)
+avatarImage.Position = UDim2.new(0, 5, 0.5, -25) -- Căn giữa theo chiều dọc trong playerInfoFrame
+avatarImage.Image = avatarUrl
+avatarImage.BackgroundTransparency = 1
+avatarImage.Parent = playerInfoFrame
 
-Tabs.Misc:AddButton({
-    Title = "♻️ Tải Lại Server",
-    Description = "Thoát và vào lại cùng server hiện tại",
-    Callback = function()
-        TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
-    end
-})
+-- Tạo Label hiển thị tên người chơi bên cạnh Avatar
+local nameLabel = Instance.new("TextLabel")
+nameLabel.Size = UDim2.new(0, 100, 0, 30)
+nameLabel.Position = UDim2.new(0, 60, 0.5, -15) -- Căn giữa theo chiều dọc
+nameLabel.Text = playerName
+nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+nameLabel.Font = Enum.Font.SourceSansBold
+nameLabel.TextSize = 16
+nameLabel.BackgroundTransparency = 1
+nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+nameLabel.Parent = playerInfoFrame
 
-Tabs.Misc:AddButton({
-    Title = "🛡 Chống AFK",
-    Description = "Ngăn game kick bạn khi không hoạt động",
-    Callback = function()
-        local vu = game:GetService("VirtualUser")
-        LocalPlayer.Idled:Connect(function()
-            vu:Button2Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
-            task.wait(1)
-            vu:Button2Up(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
-        end)
-    end
-})
+-- Hộp thoại xác nhận thoát
+local confirmFrame = Instance.new("Frame")
+confirmFrame.Size = UDim2.new(0, 200, 0, 100)
+confirmFrame.Position = UDim2.new(0.5, -100, 0.5, -50)
+confirmFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+confirmFrame.BorderSizePixel = 2
+confirmFrame.Visible = false
+confirmFrame.Parent = screenGui
 
-Tabs.Misc:AddButton({
-    Title = "🌙 Chế Độ Ban Đêm",
-    Description = "Giảm độ sáng của màn hình game",
-    Callback = function()
-        game.Lighting.Brightness = 0
-        game.Lighting.FogEnd = 200
-        game.Lighting.Ambient = Color3.fromRGB(50, 50, 50)
-    end
-})
+local confirmLabel = Instance.new("TextLabel")
+confirmLabel.Size = UDim2.new(1, 0, 0, 40)
+confirmLabel.BackgroundTransparency = 1
+confirmLabel.Text = "Bạn có chắc chắn muốn thoát?"
+confirmLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+confirmLabel.Font = Enum.Font.SourceSansBold
+confirmLabel.TextSize = 16
+confirmLabel.Parent = confirmFrame
 
--- Avatar 
-local AvatarButton = Fluent:CreateDraggableButton({
-    Image = AvatarURL,
-    Position = iconPosition,
-    Size = UDim2.fromOffset(60, 60),
-    OnClick = function()
-        isUIOpen = not isUIOpen
-        if isUIOpen then
-            Window:Show()
-        else
-            Window:Hide()
-        end
-    end
-})
+local yesButton = Instance.new("TextButton")
+yesButton.Size = UDim2.new(0.5, -5, 0, 30)
+yesButton.Position = UDim2.new(0, 5, 1, -35)
+yesButton.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+yesButton.Text = "Có"
+yesButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+yesButton.Font = Enum.Font.SourceSansBold
+yesButton.TextSize = 16
+yesButton.Parent = confirmFrame
 
-AvatarButton.Button.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        isDragging = true
-        dragOffset = input.Position - AvatarButton.Button.AbsolutePosition
-    end
+local noButton = Instance.new("TextButton")
+noButton.Size = UDim2.new(0.5, -5, 0, 30)
+noButton.Position = UDim2.new(0.5, 5, 1, -35)
+noButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+noButton.Text = "Không"
+noButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+noButton.Font = Enum.Font.SourceSansBold
+noButton.TextSize = 16
+noButton.Parent = confirmFrame
+
+-- Xử lý khi bấm nút đóng
+closeButton.MouseButton1Click:Connect(function()
+    confirmFrame.Visible = true
 end)
 
-UserInputService.InputChanged:Connect(function(input)
-    if isDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-        AvatarButton.Button.Position = UDim2.fromOffset(
-            input.Position.X - dragOffset.X,
-            input.Position.Y - dragOffset.Y
-        )
-    end
+-- Xử lý khi chọn "Có"
+yesButton.MouseButton1Click:Connect(function()
+    screenGui:Destroy() -- Xóa toàn bộ UI
+    print("❌ Menoob Hub đã bị tắt.")
 end)
 
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        isDragging = false
-        -- Lưu vị trí icon sau khi di chuyển
-        iconPosition = AvatarButton.Button.Position
-    end
+-- Xử lý khi chọn "Không"
+noButton.MouseButton1Click:Connect(function()
+    confirmFrame.Visible = false
 end)
 
--- 🖱️ Bắt đầu kéo UI khi bấm vào phần trên cùng của UI
-Window.Frame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        isDraggingWindow = true
-        dragStart = input.Position
-        startPos = Window.Frame.Position
-    end
+-- Chức Năng Ẩn/Hiện UI Khi Bấm Nút Avatar
+toggleButton.Active = true
+toggleButton.Draggable = true
+toggleButton.MouseButton1Click:Connect(function()
+    mainFrame.Visible = not mainFrame.Visible
 end)
 
--- 📌 Cập nhật vị trí UI khi di chuyển chuột
-UserInputService.InputChanged:Connect(function(input)
-    if isDraggingWindow and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local delta = input.Position - dragStart
-        Window.Frame.Position = UDim2.fromOffset(startPos.X.Offset + delta.X, startPos.Y.Offset + delta.Y)
-    end
-end)
-
--- 🛑 Dừng kéo khi nhả chuột
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        isDraggingWindow = false
-    end
-end)
-
-loadstring(game:HttpGet("https://raw.githubusercontent.com/menoobgaming/script/refs/heads/main/Auto%20Hop?token=GHSAT0AAAAAAC7UYEHTVX4LICCFQVI5ZMISZ6DX47A"))()
-
--- Tab Auto Hop
-Tabs.AutoFarm:AddParagraph({
-    Title = "Chọn chế độ Auto Hop",
-    Content = "Nhấn vào một trong các chế độ dưới đây để bắt đầu!"
-})
-
-Tabs.AutoFarm:AddButton({
-    Title = "⚔ Auto Hop Rip Indra",
-    Callback = function()
-        RipIndra()
-    end
-})
-
-Tabs.AutoFarm:AddButton({
-    Title = "⚔ Auto Hop Low",
-    Callback = function()
-        Low()
-    end
-})
-
+print("✅ Menoob Hub đã hiển thị thành công!")
